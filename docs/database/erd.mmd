@@ -1,0 +1,475 @@
+erDiagram
+    %% ========================================================
+    %% NOVELIA BOOKS — PRODUCTION ENTITY RELATIONSHIP DIAGRAM
+    %% Database: MySQL 8.x (InnoDB, utf8mb4)
+    %% Total Tables: 34
+    %% ========================================================
+
+    %% --------------------------------------------------------
+    %% 1. USERS & ACCESS
+    %% --------------------------------------------------------
+    roles {
+        bigint id PK
+        varchar_50 name UK
+        varchar_255 description
+        datetime created_at
+    }
+
+    users {
+        bigint id PK
+        varchar_255 email UK
+        varchar_255 hashed_password
+        varchar_150 full_name
+        varchar_20 phone
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    user_roles {
+        bigint id PK
+        bigint user_id FK
+        bigint role_id FK
+        datetime assigned_at
+    }
+
+    user_addresses {
+        bigint id PK
+        bigint user_id FK
+        varchar_100 recipient_name
+        varchar_20 phone
+        varchar_50 province_code
+        varchar_100 province_name
+        varchar_50 district_code
+        varchar_100 district_name
+        varchar_50 ward_code
+        varchar_100 ward_name
+        varchar_255 street_address
+        boolean is_default
+        datetime created_at
+        datetime updated_at
+    }
+
+    user_preferences {
+        bigint id PK
+        bigint user_id FK "UK"
+        json preferred_categories
+        json preferred_authors
+        varchar_255 reading_goals
+        datetime created_at
+        datetime updated_at
+    }
+
+    users ||--o{ user_roles : "has"
+    roles ||--o{ user_roles : "assigned_to"
+    users ||--o{ user_addresses : "owns"
+    users ||--o| user_preferences : "configures"
+
+    %% --------------------------------------------------------
+    %% 2. CATALOG
+    %% --------------------------------------------------------
+    publishers {
+        bigint id PK
+        varchar_150 name UK
+        varchar_170 slug UK
+        varchar_255 contact_info
+        varchar_255 address
+        varchar_255 website
+        datetime created_at
+    }
+
+    authors {
+        bigint id PK
+        varchar_150 name
+        varchar_170 slug UK
+        text bio
+        varchar_500 avatar_url
+        int birth_year
+        varchar_100 nationality
+        datetime created_at
+    }
+
+    categories {
+        bigint id PK
+        varchar_100 name UK
+        varchar_120 slug UK
+        varchar_255 description
+        bigint parent_id FK
+        int display_order
+        datetime created_at
+    }
+
+    books {
+        bigint id PK
+        varchar_20 isbn UK
+        varchar_50 sku UK
+        varchar_255 title
+        varchar_280 slug UK
+        bigint publisher_id FK
+        decimal_12_2 price
+        decimal_12_2 original_price
+        int page_count
+        varchar_50 dimension
+        int weight_grams
+        varchar_30 cover_type
+        text description
+        text sample_text
+        varchar_500 cover_image_url
+        varchar_30 status
+        date published_date
+        datetime created_at
+        datetime updated_at
+    }
+
+    book_authors {
+        bigint id PK
+        bigint book_id FK
+        bigint author_id FK
+        boolean is_primary
+        int order_index
+    }
+
+    book_categories {
+        bigint id PK
+        bigint book_id FK
+        bigint category_id FK
+    }
+
+    book_images {
+        bigint id PK
+        bigint book_id FK
+        varchar_500 image_url
+        varchar_255 alt_text
+        int display_order
+        boolean is_cover
+        datetime created_at
+    }
+
+    categories ||--o{ categories : "subcategories"
+    publishers ||--o{ books : "publishes"
+    books ||--o{ book_authors : "has"
+    authors ||--o{ book_authors : "writes"
+    books ||--o{ book_categories : "classified_in"
+    categories ||--o{ book_categories : "contains"
+    books ||--o{ book_images : "galleries"
+
+    %% --------------------------------------------------------
+    %% 3. INVENTORY
+    %% --------------------------------------------------------
+    inventory {
+        bigint id PK
+        bigint book_id FK "UK"
+        int physical_stock
+        int reserved_stock
+        int low_stock_threshold
+        datetime updated_at
+    }
+
+    inventory_transactions {
+        bigint id PK
+        bigint inventory_id FK
+        varchar_50 transaction_type
+        int quantity_change
+        int stock_after
+        varchar_100 reference_code
+        varchar_255 notes
+        bigint created_by_user_id FK
+        datetime created_at
+    }
+
+    books ||--o| inventory : "tracks_stock"
+    inventory ||--o{ inventory_transactions : "mutates"
+    users ||--o{ inventory_transactions : "audits"
+
+    %% --------------------------------------------------------
+    %% 4. COMMERCE
+    %% --------------------------------------------------------
+    carts {
+        bigint id PK
+        bigint user_id FK "UK"
+        datetime created_at
+        datetime updated_at
+    }
+
+    cart_items {
+        bigint id PK
+        bigint cart_id FK
+        bigint book_id FK
+        int quantity
+        datetime added_at
+        datetime updated_at
+    }
+
+    wishlists {
+        bigint id PK
+        bigint user_id FK
+        varchar_100 name
+        boolean is_public
+        datetime created_at
+        datetime updated_at
+    }
+
+    wishlist_items {
+        bigint id PK
+        bigint wishlist_id FK
+        bigint book_id FK
+        datetime added_at
+    }
+
+    orders {
+        bigint id PK
+        varchar_50 order_code UK
+        bigint user_id FK
+        decimal_12_2 subtotal_amount
+        decimal_12_2 shipping_fee
+        decimal_12_2 discount_amount
+        decimal_12_2 total_amount
+        varchar_30 status
+        varchar_100 recipient_name
+        varchar_20 recipient_phone
+        varchar_100 shipping_province
+        varchar_100 shipping_district
+        varchar_100 shipping_ward
+        varchar_255 shipping_street_address
+        text customer_notes
+        text staff_notes
+        varchar_255 cancelled_reason
+        datetime created_at
+        datetime updated_at
+    }
+
+    order_items {
+        bigint id PK
+        bigint order_id FK
+        bigint book_id FK
+        varchar_255 book_title_snapshot
+        varchar_20 book_isbn_snapshot
+        varchar_50 book_sku_snapshot
+        decimal_12_2 price_at_purchase
+        int quantity
+        decimal_12_2 subtotal
+        datetime created_at
+    }
+
+    coupons {
+        bigint id PK
+        varchar_50 code UK
+        varchar_255 description
+        varchar_20 discount_type
+        decimal_12_2 discount_value
+        decimal_12_2 min_order_value
+        decimal_12_2 max_discount_value
+        int usage_limit
+        int used_count
+        datetime start_date
+        datetime end_date
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    coupon_usages {
+        bigint id PK
+        bigint coupon_id FK
+        bigint user_id FK
+        bigint order_id FK
+        decimal_12_2 discount_applied
+        datetime used_at
+    }
+
+    users ||--o| carts : "owns"
+    carts ||--o{ cart_items : "contains"
+    books ||--o{ cart_items : "added_to"
+    users ||--o{ wishlists : "creates"
+    wishlists ||--o{ wishlist_items : "contains"
+    books ||--o{ wishlist_items : "saved_in"
+    users ||--o{ orders : "places"
+    orders ||--o{ order_items : "contains"
+    books ||--o{ order_items : "referenced_in"
+    coupons ||--o{ coupon_usages : "redeemed_via"
+    orders ||--o{ coupon_usages : "discounts"
+    users ||--o{ coupon_usages : "benefits"
+
+    %% --------------------------------------------------------
+    %% 5. PAYMENT & SHIPPING
+    %% --------------------------------------------------------
+    payments {
+        bigint id PK
+        varchar_50 payment_code UK
+        bigint order_id FK "UK"
+        varchar_30 payment_method
+        varchar_30 payment_status
+        decimal_12_2 amount
+        varchar_100 transaction_id
+        json gateway_response
+        datetime paid_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    refund_requests {
+        bigint id PK
+        varchar_50 refund_code UK
+        bigint order_id FK
+        bigint payment_id FK
+        decimal_12_2 amount
+        text reason
+        varchar_30 status
+        text admin_notes
+        bigint processed_by_user_id FK
+        datetime processed_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    shipments {
+        bigint id PK
+        varchar_100 tracking_code UK
+        bigint order_id FK "UK"
+        varchar_50 carrier
+        varchar_50 shipping_service_id
+        decimal_12_2 shipping_fee
+        varchar_30 status
+        date estimated_delivery_date
+        datetime dispatched_at
+        datetime delivered_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    shipment_events {
+        bigint id PK
+        bigint shipment_id FK
+        varchar_50 status
+        varchar_255 location
+        varchar_255 description
+        json raw_payload
+        datetime occurred_at
+        datetime created_at
+    }
+
+    orders ||--o| payments : "settled_via"
+    payments ||--o{ refund_requests : "refunds"
+    orders ||--o{ refund_requests : "requests_refund"
+    orders ||--o| shipments : "dispatched_by"
+    shipments ||--o{ shipment_events : "telemetry"
+
+    %% --------------------------------------------------------
+    %% 6. CUSTOMER EXPERIENCE
+    %% --------------------------------------------------------
+    reviews {
+        bigint id PK
+        bigint user_id FK
+        bigint book_id FK
+        bigint order_id FK
+        int rating
+        varchar_150 title
+        text comment
+        boolean is_verified_purchase
+        varchar_30 status
+        datetime created_at
+        datetime updated_at
+    }
+
+    notifications {
+        bigint id PK
+        bigint user_id FK
+        varchar_150 title
+        text message
+        varchar_50 notification_type
+        varchar_255 reference_link
+        boolean is_read
+        datetime read_at
+        datetime created_at
+    }
+
+    users ||--o{ reviews : "authors"
+    books ||--o{ reviews : "reviewed_in"
+    orders ||--o{ reviews : "verifies"
+    users ||--o{ notifications : "receives"
+
+    %% --------------------------------------------------------
+    %% 7. AI ECOSYSTEM
+    %% --------------------------------------------------------
+    ai_conversations {
+        bigint id PK
+        varchar_64 session_uuid UK
+        bigint user_id FK
+        varchar_50 conversation_type
+        varchar_255 title
+        datetime created_at
+        datetime updated_at
+    }
+
+    ai_messages {
+        bigint id PK
+        bigint conversation_id FK
+        varchar_20 sender
+        text content
+        json tool_calls
+        json tool_results
+        int tokens_used
+        datetime created_at
+    }
+
+    ai_action_logs {
+        bigint id PK
+        bigint conversation_id FK
+        bigint user_id FK
+        varchar_50 user_role
+        varchar_100 tool_name
+        json input_arguments
+        varchar_50 execution_status
+        varchar_100 confirmation_token
+        boolean is_confirmed
+        text output_summary
+        int execution_duration_ms
+        datetime created_at
+    }
+
+    user_book_events {
+        bigint id PK
+        bigint user_id FK
+        varchar_100 session_id
+        bigint book_id FK
+        varchar_50 event_type
+        json metadata_json
+        datetime created_at
+    }
+
+    book_recommendations {
+        bigint id PK
+        bigint user_id FK
+        bigint book_id FK
+        varchar_50 algorithm_type
+        decimal_5_4 score
+        varchar_255 reason
+        datetime generated_at
+    }
+
+    users ||--o{ ai_conversations : "participates"
+    ai_conversations ||--o{ ai_messages : "contains"
+    ai_conversations ||--o{ ai_action_logs : "records_tools"
+    users ||--o{ ai_action_logs : "context"
+    users ||--o{ user_book_events : "triggers"
+    books ||--o{ user_book_events : "interacted_with"
+    users ||--o{ book_recommendations : "receives"
+    books ||--o{ book_recommendations : "recommended"
+
+    %% --------------------------------------------------------
+    %% 8. SYSTEM AUDITING
+    %% --------------------------------------------------------
+    audit_logs {
+        bigint id PK
+        bigint user_id FK
+        varchar_100 action
+        varchar_100 entity_type
+        varchar_100 entity_id
+        json old_values
+        json new_values
+        varchar_45 ip_address
+        varchar_255 user_agent
+        datetime created_at
+    }
+
+    users ||--o{ audit_logs : "performed_by"

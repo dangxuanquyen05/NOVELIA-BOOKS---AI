@@ -179,3 +179,34 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# ========================================================
+# NOVELIA BOOKS — CRITICAL SECRET & ENVIRONMENT GUARDS
+# ========================================================
+# Environment & Secrets (Mandatory per AGENTS.md)
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+*.pem
+*.key
+*.cert
+
+# Node / Frontend Build Artifacts
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
+# Python Virtual Environments
+.venv/
+backend/.venv/
+venv/
+env/
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
